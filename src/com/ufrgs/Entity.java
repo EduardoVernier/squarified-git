@@ -1,36 +1,60 @@
 package com.ufrgs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Entity {
 
-    String id;
-    Double weight;
+    private String id;
+    private String shortId;
+    private String printId = "";
+    private List<Double> weightList;
+    public List<Rectangle> rectangleList;
+    private List<Entity> children;
 
-    public Entity(String id, Double weight) {
+    public Entity(String id, int numberOfRevisions) {
+
         this.id = id;
-        this.weight = weight;
+        String split[] = getId().split("/");
+        this.shortId = split[split.length - 1];
+
+        // Initialize lists
+        children = new ArrayList<>();
+        weightList = new ArrayList<>(numberOfRevisions);
+        for (int i = 0; i < numberOfRevisions; ++i) {
+            weightList.add(0.0);
+        }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Entity entity = (Entity) o;
-
-        return id != null ? id.equals(entity.id) : entity.id == null;
+    public String getId() {
+        return id;
     }
 
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+    public int getNumberOfRevisions() {
+        return weightList.size();
     }
 
-    @Override
-    public String toString() {
-        return "Entity{" +
-                "id='" + id + '\'' +
-                ", weight=" + weight +
-                '}';
+    public double getWeight(int revision) {
+        return weightList.get(revision);
     }
 
+    public void setWeight(double weight, int revision) {
+        weightList.set(revision, weight);
+    }
+
+    public void addChild(Entity entity) {
+        children.add(entity);
+    }
+
+    public List<Double> getWeightList() {
+        return weightList;
+    }
+
+    public List<Entity> getChildren() {
+        return children;
+    }
+
+    public boolean isLeaf() {
+        return children.size() == 0;
+    }
 }

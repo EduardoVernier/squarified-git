@@ -5,12 +5,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Parser {
 
-    public static List<List<Entity>> parseCSVs(String directory) {
+    private static int numberOfRevisions;
+
+    static List<Entity> parseCSVs(String directory) {
+
+        List<Entity> entityList = new ArrayList<>();
 
         File[] fileList = new File(directory).listFiles();
         List<String> fileNames = new ArrayList<>();
@@ -26,58 +31,18 @@ public class Parser {
                 }
             }
         } else {
-            System.err.println("Invalid dir path.");
+            System.err.println("Invalid input dir path.");
             System.exit(-1);
         }
-
 
         fileNames.sort(String::compareTo);
         fileNames.sort((o1, o2) -> Integer.valueOf(o1.length()).compareTo(Integer.valueOf(o2.length())));
 
-        // Parse files in two passes
-        // First to count number of unique items and initialize data structures with the correct size
-        // And second to fill the values correctly
-        List<List<Entity>> revisionList = new LinkedList<>();
         try {
 
-            List<String> uniqueItems = new ArrayList<>();
-
-            int numberOfRevisions = fileNames.size();
-            for (String fileName : fileNames) {
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
-                String currentLine = bufferedReader.readLine();
-                String[] header = currentLine.split(",");
-
-                if (!header[0].equals("id") || !header[1].equals("weight")) {
-                    System.err.println("Error parsing header - " + fileName);
-                    System.exit(-1);
-                }
-
-                while ((currentLine = bufferedReader.readLine()) != null) {
-                    String[] split = currentLine.split(",");
-                    if (split.length != 2) {
-                        System.err.println("Error parsing csv file");
-                        System.exit(-1);
-                    } else {
-                        String id = split[0];
-                        if (!uniqueItems.contains(id)) {
-                            uniqueItems.add(id);
-                        }
-                    }
-                }
-            }
-
-            for (int revision = 0; revision < numberOfRevisions; ++revision) {
-                List<Entity> entityList = new ArrayList<>(uniqueItems.size());
-                for (String uniqueItem : uniqueItems) {
-                    entityList.add(new Entity(uniqueItem, 0.0));
-                }
-                revisionList.add(entityList);
-            }
-
+            numberOfRevisions = fileNames.size();
             for (int revision = 0; revision < numberOfRevisions; ++revision) {
 
-                List<Entity> entityList = revisionList.get(revision);
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(fileNames.get(revision)));
                 String currentLine = bufferedReader.readLine();
                 String[] header = currentLine.split(",");
@@ -90,14 +55,21 @@ public class Parser {
                 while ((currentLine = bufferedReader.readLine()) != null) {
 
                     String[] split = currentLine.split(",");
+
                     if (split.length != 2) {
                         System.err.println("Error parsing csv file");
                         System.exit(-1);
                     } else {
                         String id = split[0];
                         double weight = Double.parseDouble(split[1]);
-                        int index = uniqueItems.indexOf(id);
-                        entityList.get(index).weight = weight;
+                        if (contains(entityList, id)) {
+                            Entity entity = find(entityList, id);
+                            entity.setWeight(weight, revision);
+                        } else {
+                            Entity entity = new Entity(id, numberOfRevisions);
+                            entity.setWeight(weight, revision);
+                            entityList.add(entity);
+                        }
                     }
                 }
             }
@@ -105,7 +77,81 @@ public class Parser {
             e.printStackTrace();
         }
 
-        return revisionList;
+        return entityList;
+    }
 
+    public static Entity buildHierarchy(String csvFile) {
+
+        List<Entity> entityList = parseCSVs(csvFile);
+
+        List<Entity> auxList = new ArrayList<>();
+        Entity root = new Entity("", numberOfRevisions);
+        auxList.add(root);
+
+        // Lexicographic sort
+        entityList.sort(Comparator.comparing(Entity::getId));
+
+        // Build hierarchy
+        for (int i = 0; i < entityList.size(); ++i) {
+            Entity current = root;
+            Entity entity = entityList.get(i);
+            int dividerIndex = entity.getId().lastIndexOf("/");
+
+            if (dividerIndex != -1) {
+                String prefix = entity.getId().substring(0, dividerIndex);
+                String[] parents = prefix.split("/");
+
+                for (String parentId : parents) {
+                    if (contains(current.getChildren(),parentId)) {
+                        current = find(current.getChildren(),parentId);
+                    } else {
+                        Entity parent = new Entity(parentId, numberOfRevisions);
+                        current.addChild(parent);
+                        current = parent;
+                    }
+                }
+                current.addChild(entity);
+            } else {
+                root.addChild(entity);
+            }
+        }
+
+        sumTree(root);
+        return root;
+    }
+
+    private static List<Double> sumTree(Entity entity) {
+
+        if (entity.isLeaf()) {
+            return entity.getWeightList();
+        } else {
+            for (Entity child : entity.getChildren()) {
+                List<Double> weightList = sumTree(child);
+                for (int revision = 0; revision < weightList.size(); ++revision) {
+                    entity.setWeight(entity.getWeight(revision) + weightList.get(revision), revision);
+                }
+            }
+            return entity.getWeightList();
+        }
+    }
+
+    private static Entity find(List<Entity> entityList, String entityId) {
+
+        for (int i = 0; i < entityList.size(); ++i) {
+            if (entityList.get(i).getId().equals(entityId)){
+                return entityList.get(i);
+            }
+        }
+        return null;
+    }
+
+    private static boolean contains(List<Entity> entityList, String id) {
+
+        for (Entity entity : entityList) {
+            if (entity.getId().equals(id)){
+                return true;
+            }
+        }
+        return false;
     }
 }
