@@ -22,4 +22,14 @@ public class Rectangle {
         return (width < height) ? width : height;
     }
 
+    public Rectangle copy() {
+        return new Rectangle(this.x, this.y, this.width, this.height);
+    }
+
+    public double getAspectRatio() {
+        if (width == 0 || height == 0) {
+            return 1;
+        }
+        return Math.min(width/height, height/width);
+    }
 }

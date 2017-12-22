@@ -22,12 +22,22 @@ public class TreemapManager {
         this.baseRectangle = baseRectangle;
         this.treemap = new Treemap();
 
-        Rectangle rectangle = new Rectangle(baseRectangle.x, baseRectangle.y, baseRectangle.width, baseRectangle.height);
+        Rectangle rectangle = this.baseRectangle.copy();
         squarifiedToLT(root.getChildren(), rectangle);
 
-        this.treemap.origin.rectangle = this.baseRectangle;
-        computeTreemapCoordinates(this.treemap.origin);
+        rectangle = this.baseRectangle.copy();
+        this.treemap.origin.rectangle = rectangle;
+        this.treemap.computeTreemapCoordinates(this.revision);
 
+        writeRectanglesToFile(this.treemap, this.revision);
+
+        nextRevision();
+    }
+
+    public void nextRevision() {
+        revision++;
+        this.treemap.origin.rectangle = this.baseRectangle.copy();
+        this.treemap.computeTreemapCoordinates(this.revision);
         writeRectanglesToFile(this.treemap, this.revision);
     }
 
@@ -97,7 +107,6 @@ public class TreemapManager {
         }
     }
 
-
     // Test if adding a new entity to row improves ratios (get closer to 1)
     boolean improvesRatio(List<Entity> currentRow, double nextEntity, double length) {
 
@@ -144,89 +153,6 @@ public class TreemapManager {
     private double getNormalizedWeight(Entity entity) {
         return entity.getWeight(this.revision) * this.normalizer;
     }
-
-
-    //  ---------
-    //  | C |   |
-    //  |---| R |
-    //  | B |   |
-    //  ---------
-    private void computeTreemapCoordinates(Block block) {
-
-        if (block.right != null && block.bottom != null) {
-
-            double baseWidth = block.rectangle.width;
-            double baseHeight = block.rectangle.height;
-            // C coordinates
-            block.rectangle.width = ((block.getCentralWeight(revision) + block.bottom.getFullWeight(revision)) / (block.getCentralWeight(revision) + block.bottom.getFullWeight(revision) + block.right.getFullWeight(revision))) * baseWidth;
-            block.rectangle.height = (block.getCentralWeight(revision) / (block.getCentralWeight(revision) + block.bottom.getFullWeight(revision))) * baseHeight;
-
-            if (Double.isNaN(block.rectangle.height) || Double.isInfinite(block.rectangle.height)) {
-                block.rectangle.height = 0;
-            }
-
-            if (Double.isNaN(block.rectangle.width) || Double.isInfinite(block.rectangle.width)) {
-                block.rectangle.width = 0;
-            }
-
-            // B coordinates
-            block.bottom.rectangle.x = block.rectangle.x;
-            block.bottom.rectangle.width = block.rectangle.width;
-            block.bottom.rectangle.y = block.rectangle.y + block.rectangle.height;
-            block.bottom.rectangle.height = baseHeight - block.rectangle.height;
-
-            // R coordinates
-            block.right.rectangle.x = block.rectangle.x + block.rectangle.width;
-            block.right.rectangle.width = baseWidth - block.rectangle.width;
-            block.right.rectangle.y = block.rectangle.y;
-            block.right.rectangle.height = baseHeight;
-
-            computeTreemapCoordinates(block.right);
-            computeTreemapCoordinates(block.bottom);
-
-        } else if (block.right != null) {
-
-            double baseWidth = block.rectangle.width;
-
-            // C coordinates - Only the width changes
-            block.rectangle.width = (block.getCentralWeight(revision) / (block.getCentralWeight(revision) + block.right.getFullWeight(revision))) * baseWidth;
-            if (Double.isNaN(block.rectangle.width) || Double.isInfinite(block.rectangle.width)) {
-                block.rectangle.width = 0;
-            }
-            // R coordinates
-            block.right.rectangle.x = block.rectangle.x + block.rectangle.width;
-            block.right.rectangle.width = baseWidth - block.rectangle.width;
-            block.right.rectangle.y = block.rectangle.y;
-            block.right.rectangle.height = block.rectangle.height;
-
-            computeTreemapCoordinates(block.right);
-
-        } else if (block.bottom != null) {
-
-            double baseHeight = block.rectangle.height;
-
-            // C coordinates - Only the height changes
-            block.rectangle.height = (block.getCentralWeight(revision) / (block.getCentralWeight(revision) + block.bottom.getFullWeight(revision))) * baseHeight;
-            if (Double.isNaN(block.rectangle.height) || Double.isInfinite(block.rectangle.height)) {
-                block.rectangle.height = 0;
-            }
-
-            // B coordinates
-            block.bottom.rectangle.x = block.rectangle.x;
-            block.bottom.rectangle.width = block.rectangle.width;
-            block.bottom.rectangle.y = block.rectangle.y + block.rectangle.height;
-            block.bottom.rectangle.height = baseHeight - block.rectangle.height;
-
-            computeTreemapCoordinates(block.bottom);
-        }
-
-        if (block.central != null) {
-            block.central.rectangle = new Rectangle(block.rectangle.x, block.rectangle.y, block.rectangle.width, block.rectangle.height);
-            computeTreemapCoordinates(block.central);
-        }
-    }
-
-
 
     private void writeRectanglesToFile(Treemap treemap, int revision) {
 
