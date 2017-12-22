@@ -1,10 +1,17 @@
 package com.ufrgs;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+import static com.ufrgs.Main.outputDir;
 import static java.lang.Double.max;
 import static java.lang.Math.pow;
 
@@ -15,12 +22,14 @@ public class TreemapManager {
     private Treemap treemap;
     private double normalizer = 0;
     private int revision = 0;
+    private int nRevisions;
 
 
     TreemapManager(Entity root, Rectangle baseRectangle) {
         this.root = root;
         this.baseRectangle = baseRectangle;
         this.treemap = new Treemap();
+        this.nRevisions = root.getNumberOfRevisions();
 
         Rectangle rectangle = this.baseRectangle.copy();
         squarifiedToLT(root.getChildren(), rectangle);
@@ -31,7 +40,9 @@ public class TreemapManager {
 
         writeRectanglesToFile(this.treemap, this.revision);
 
-        nextRevision();
+        for (int i = 1; i < this.nRevisions; ++i) {
+            nextRevision();
+        }
     }
 
     public void nextRevision() {
@@ -156,11 +167,20 @@ public class TreemapManager {
 
     private void writeRectanglesToFile(Treemap treemap, int revision) {
 
+        new File(Main.outputDir).mkdirs(); // In case path doesn't exist
         List<String> lines = new ArrayList<>();
         addLine(lines, treemap.origin);
 
-        for (String line : lines) {
-            System.out.println(line);
+        lines.sort(String.CASE_INSENSITIVE_ORDER);
+//        for (String line : lines) {
+//            System.out.println(line);
+//        }
+
+        Path file = Paths.get(String.format("%s/t%d.rect", Main.outputDir, revision));
+        try {
+            Files.write(file, lines, Charset.forName("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

@@ -4,11 +4,13 @@ import java.util.List;
 
 public class Main {
 
+    static String inputDir = "./dataset/test";
+    static String outputDir = "./output/test";
+
     public static void main(String[] args) {
 
-        String dirPath = "./dataset/test";
 
-        Entity root = Parser.buildHierarchy(dirPath);
+        Entity root = Parser.buildHierarchy(inputDir);
 
         Rectangle baseRectangle = new Rectangle(1000, 1000);
         new TreemapManager(root, baseRectangle);
