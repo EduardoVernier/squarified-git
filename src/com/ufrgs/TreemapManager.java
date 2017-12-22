@@ -3,6 +3,8 @@ package com.ufrgs;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+
 import static java.lang.Double.max;
 import static java.lang.Math.pow;
 
@@ -20,14 +22,14 @@ public class TreemapManager {
         this.baseRectangle = baseRectangle;
         this.treemap = new Treemap();
 
-
         Rectangle rectangle = new Rectangle(baseRectangle.x, baseRectangle.y, baseRectangle.width, baseRectangle.height);
         squarifiedToLT(root.getChildren(), rectangle);
 
-        treemap.origin.rectangle = this.baseRectangle;
-        computeTreemapCoordinates(treemap.origin);
-    }
+        this.treemap.origin.rectangle = this.baseRectangle;
+        computeTreemapCoordinates(this.treemap.origin);
 
+        writeRectanglesToFile(this.treemap, this.revision);
+    }
 
     private void squarifiedToLT(List<Entity> entityList, Rectangle rectangle) {
 
@@ -221,6 +223,36 @@ public class TreemapManager {
         if (block.central != null) {
             block.central.rectangle = new Rectangle(block.rectangle.x, block.rectangle.y, block.rectangle.width, block.rectangle.height);
             computeTreemapCoordinates(block.central);
+        }
+    }
+
+
+
+    private void writeRectanglesToFile(Treemap treemap, int revision) {
+
+        List<String> lines = new ArrayList<>();
+        addLine(lines, treemap.origin);
+
+        for (String line : lines) {
+            System.out.println(line);
+        }
+    }
+
+    private void addLine(List<String> lines, Block block) {
+
+        if (block.id != null) {
+            lines.add(String.format(Locale.ROOT, "%s,%.10f,%.10f,%.10f,%.10f",
+                      block.id, block.rectangle.x, block.rectangle.y, block.rectangle.width, block.rectangle.height));
+        }
+
+        if(block.central != null) {
+            addLine(lines, block.central);
+        }
+        if(block.right != null) {
+            addLine(lines, block.right);
+        }
+        if(block.bottom != null) {
+            addLine(lines, block.bottom);
         }
     }
 
