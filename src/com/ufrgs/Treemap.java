@@ -7,9 +7,11 @@ public class Treemap {
 
     Block origin;
     List<Treemap> treemapList;
+    Rectangle baseRectangle;
     private List<Entity> entityList;
 
-    public Treemap(List<Entity> entityList) {
+    public Treemap(List<Entity> entityList, Rectangle rectangle) {
+        this.baseRectangle = rectangle;
         this.entityList = new ArrayList<>();
         for (Entity entity : entityList) {
             this.entityList.add(entity);
@@ -17,20 +19,19 @@ public class Treemap {
     }
 
     public void computeTreemap(int revision) {
+        this.origin.rectangle = baseRectangle.copy();
         computeCoordinates(this.origin, revision);
 
         for (Entity entity : entityList) {
             // Find out which entities must be added
-            if (entity.getAdditionRevision() == revision) {
+            if (entity.getAdditionRevision() == revision && revision != 0 ) {
                 // Add them, recomputing treemap after each insertion
                 addItem(entity);
 
                 // Trigger children treemap computation (reset origin coords)
-                // computeCoordinates(this.origin, revision);
-
+                this.origin.rectangle = baseRectangle.copy();
+                computeCoordinates(this.origin, revision);
             }
-
-
         }
     }
 
@@ -126,9 +127,11 @@ public class Treemap {
                     // System.out.println("Right insert " + receiver.right.id + " into " + receiver.id);
                 } else {
                     if (receiver.central == null) {
-                        receiver.central = new Block(receiver.id, receiver.weight, receiver.kind);
+                        receiver.central = new Block(receiver.id, receiver.weightList);
                         receiver.central.right = new Block(entity);
-                        receiver.id = receiver.id + "_";
+                        // Reset upper level
+                        receiver.id = null;
+                        receiver.weightList = new ArrayList<>();
                     } else {
                         if (receiver.central.right == null) {
                             receiver.central.right = new Block(entity);
@@ -147,9 +150,11 @@ public class Treemap {
                     // System.out.println("Bottom insert " + receiver.bottom.id + " into " + receiver.id);
                 } else {
                     if (receiver.central == null) {
-                        receiver.central = new Block(receiver.id, receiver.weight, receiver.kind);
+                        receiver.central = new Block(receiver.id, receiver.weightList);
                         receiver.central.bottom = new Block(entity);
-                        receiver.id = receiver.id + "_";
+                        // Reset upper level
+                        receiver.id = null;
+                        receiver.weightList = new ArrayList<>();
                     } else {
                         if (receiver.central.bottom == null) {
                             receiver.central.bottom = new Block(entity);
@@ -164,7 +169,6 @@ public class Treemap {
                 }
             }
         }
-
     }
 
     private Block findWorstAspectRatioBlock(Block block) {

@@ -66,4 +66,10 @@ public class Entity {
         }
         return weightList.size();
     }
+
+    @Override
+    public String toString() {
+        return  "id='" + id + '\'' +
+                ", weightList=" + weightList;
+    }
 }

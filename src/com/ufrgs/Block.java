@@ -14,6 +14,13 @@ public class Block {
 
     }
 
+    public Block(String id, List<Double> weightList) {
+        this.id = id;
+        for (double weight : weightList) {
+            this.weightList.add(weight);
+        }
+    }
+
     public Block(Entity entity) {
         this.id = entity.getId();
         this.weightList = entity.getWeightList();

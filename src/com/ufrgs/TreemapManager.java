@@ -29,12 +29,12 @@ public class TreemapManager {
         this.baseRectangle = baseRectangle;
         this.nRevisions = root.getNumberOfRevisions();
 
-        this.treemap = new Treemap(root.getChildren());
+        this.treemap = new Treemap(root.getChildren(), this.baseRectangle.copy());
         Rectangle rectangle = this.baseRectangle.copy();
         squarifiedToLT(root.getChildren(), rectangle);
 
         rectangle = this.baseRectangle.copy();
-        this.treemap.origin.rectangle = rectangle;
+//        this.treemap.origin.baseRectangle = baseRectangle;
         this.treemap.computeTreemap(this.revision);
 
         writeRectanglesToFile(this.treemap, this.revision);
@@ -48,7 +48,7 @@ public class TreemapManager {
         revision++;
 
         // Rearrange cell with new weights
-        this.treemap.origin.rectangle = this.baseRectangle.copy();
+//        this.treemap.origin.baseRectangle = this.baseRectangle.copy();
         this.treemap.computeTreemap(this.revision);
 
         writeRectanglesToFile(this.treemap, this.revision);
@@ -97,7 +97,7 @@ public class TreemapManager {
                 // Connect "chain" to outside block
                 outsideBlock.addCentralBlock(blockList.get(0));
 
-                // Recompute remaining rectangle
+                // Recompute remaining baseRectangle
                 if (verticalCut) {
                     rectangle.x = rectangle.x + area / rectangle.height;
                     rectangle.width = rectangle.width - area / rectangle.height;
