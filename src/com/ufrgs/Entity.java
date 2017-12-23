@@ -57,4 +57,13 @@ public class Entity {
     public boolean isLeaf() {
         return children.size() == 0;
     }
+
+    public int getAdditionRevision() {
+        for (int i = 0; i <  weightList.size(); ++i) {
+            if (weightList.get(i) > 0.0) {
+                return i;
+            }
+        }
+        return weightList.size();
+    }
 }

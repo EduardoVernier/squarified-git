@@ -1,17 +1,37 @@
 package com.ufrgs;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Treemap {
 
     Block origin;
     List<Treemap> treemapList;
+    private List<Entity> entityList;
 
+    public Treemap(List<Entity> entityList) {
+        this.entityList = new ArrayList<>();
+        for (Entity entity : entityList) {
+            this.entityList.add(entity);
+        }
+    }
 
-    public void computeTreemapCoordinates(int revision) {
+    public void computeTreemap(int revision) {
         computeCoordinates(this.origin, revision);
 
-        // TODO: compute children
+        for (Entity entity : entityList) {
+            // Find out which entities must be added
+            if (entity.getAdditionRevision() == revision) {
+                // Add them, recomputing treemap after each insertion
+                addItem(entity);
+
+                // Trigger children treemap computation (reset origin coords)
+                // computeCoordinates(this.origin, revision);
+
+            }
+
+
+        }
     }
 
     //  ---------
@@ -92,6 +112,59 @@ public class Treemap {
             block.central.rectangle = new Rectangle(block.rectangle.x, block.rectangle.y, block.rectangle.width, block.rectangle.height);
             computeCoordinates(block.central, revision);
         }
+    }
+
+    public void addItem(Entity entity) {
+        if (origin == null) {
+//            origin = new Block(id, value, kind);
+        } else {
+            Block receiver = findWorstAspectRatioBlock(origin);
+
+            if (receiver.rectangle.width >= receiver.rectangle.height) {
+                if (receiver.right == null) {
+                    receiver.right = new Block(entity);
+                    // System.out.println("Right insert " + receiver.right.id + " into " + receiver.id);
+                } else {
+                    if (receiver.central == null) {
+                        receiver.central = new Block(receiver.id, receiver.weight, receiver.kind);
+                        receiver.central.right = new Block(entity);
+                        receiver.id = receiver.id + "_";
+                    } else {
+                        if (receiver.central.right == null) {
+                            receiver.central.right = new Block(entity);
+                        } else {
+                            // System.out.print("WEIRD CENTRAL RIGHT INSERT. ");
+                            Block temp = receiver.central.right;
+                            receiver.central.right = new Block(entity);
+                            receiver.central.right.right = temp;
+                        }
+                    }
+                    // System.out.println("Special Right insert " + receiver.central.right.id + " into " + receiver.central);
+                }
+            } else {
+                if (receiver.bottom == null) {
+                    receiver.bottom = new Block(entity);
+                    // System.out.println("Bottom insert " + receiver.bottom.id + " into " + receiver.id);
+                } else {
+                    if (receiver.central == null) {
+                        receiver.central = new Block(receiver.id, receiver.weight, receiver.kind);
+                        receiver.central.bottom = new Block(entity);
+                        receiver.id = receiver.id + "_";
+                    } else {
+                        if (receiver.central.bottom == null) {
+                            receiver.central.bottom = new Block(entity);
+                        } else {
+                            // System.out.print("WEIRD CENTRAL BOTTOM INSERT. ");
+                            Block temp = receiver.central.bottom;
+                            receiver.central.bottom = new Block(entity);
+                            receiver.central.bottom.bottom = temp;
+                        }
+                    }
+                    // System.out.println("Special Bottom insert " + receiver.central.bottom.id + " into " + receiver.central);
+                }
+            }
+        }
+
     }
 
     private Block findWorstAspectRatioBlock(Block block) {

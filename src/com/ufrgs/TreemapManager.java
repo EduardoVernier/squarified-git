@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-import static com.ufrgs.Main.outputDir;
 import static java.lang.Double.max;
 import static java.lang.Math.pow;
 
@@ -28,15 +27,15 @@ public class TreemapManager {
     TreemapManager(Entity root, Rectangle baseRectangle) {
         this.root = root;
         this.baseRectangle = baseRectangle;
-        this.treemap = new Treemap();
         this.nRevisions = root.getNumberOfRevisions();
 
+        this.treemap = new Treemap(root.getChildren());
         Rectangle rectangle = this.baseRectangle.copy();
         squarifiedToLT(root.getChildren(), rectangle);
 
         rectangle = this.baseRectangle.copy();
         this.treemap.origin.rectangle = rectangle;
-        this.treemap.computeTreemapCoordinates(this.revision);
+        this.treemap.computeTreemap(this.revision);
 
         writeRectanglesToFile(this.treemap, this.revision);
 
@@ -47,14 +46,18 @@ public class TreemapManager {
 
     public void nextRevision() {
         revision++;
+
+        // Rearrange cell with new weights
         this.treemap.origin.rectangle = this.baseRectangle.copy();
-        this.treemap.computeTreemapCoordinates(this.revision);
+        this.treemap.computeTreemap(this.revision);
+
         writeRectanglesToFile(this.treemap, this.revision);
     }
 
     private void squarifiedToLT(List<Entity> entityList, Rectangle rectangle) {
 
         // Sort elements
+        entityList.removeIf(entity -> entity.getWeight(0) == 0.0);
         entityList.sort(Comparator.comparing(o -> ((Entity) o).getWeight(0)).reversed());
         normalize(entityList, rectangle.width * rectangle.height);
 

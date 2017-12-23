@@ -60,4 +60,12 @@ public class Block {
         }
     }
 
+    @Override
+    public String toString() {
+        return id + "{" +
+                "c=" + central +
+                ", r=" + right +
+                ", b=" + bottom +
+                '}';
+    }
 }
