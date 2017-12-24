@@ -4,7 +4,9 @@ import java.util.List;
 
 public class Main {
 
+//    static String inputDir = "/home/eduardo/PycharmProjects/dynamic-treemap-resources/dataset/hiv";
     static String inputDir = "./dataset/test";
+
     static String outputDir = "./output/test";
 
     public static void main(String[] args) {

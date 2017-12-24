@@ -6,10 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static java.lang.Double.max;
 import static java.lang.Math.pow;
@@ -18,26 +15,27 @@ public class TreemapManager {
 
     private Rectangle baseRectangle;
     private Entity root;
-    private Treemap treemap;
+    private Treemap rootTreemap;
     private double normalizer = 0;
     private int revision = 0;
     private int nRevisions;
 
 
     TreemapManager(Entity root, Rectangle baseRectangle) {
+        Arrays.stream(new File(Main.outputDir).listFiles()).forEach(File::delete);
+
         this.root = root;
         this.baseRectangle = baseRectangle;
         this.nRevisions = root.getNumberOfRevisions();
 
-        this.treemap = new Treemap(root.getChildren(), this.baseRectangle.copy());
+        // = new Treemap(root.getChildren(), this.baseRectangle.copy());
         Rectangle rectangle = this.baseRectangle.copy();
-        squarifiedToLT(root.getChildren(), rectangle);
+        this.rootTreemap = squarifiedToLT("", root.getChildren(), rectangle);
+//
+////        this.rootTreemap.origin.baseRectangle = baseRectangle;
+//        this.rootTreemap.computeTreemap(this.revision);
 
-        rectangle = this.baseRectangle.copy();
-//        this.treemap.origin.baseRectangle = baseRectangle;
-        this.treemap.computeTreemap(this.revision);
-
-        writeRectanglesToFile(this.treemap, this.revision);
+        writeRectanglesToFile(this.rootTreemap, this.revision);
 
         for (int i = 1; i < this.nRevisions; ++i) {
             nextRevision();
@@ -49,20 +47,29 @@ public class TreemapManager {
 
         // Rearrange cell with new weights
 //        this.treemap.origin.baseRectangle = this.baseRectangle.copy();
-        this.treemap.computeTreemap(this.revision);
+        this.rootTreemap.computeTreemap(this.revision);
 
-        writeRectanglesToFile(this.treemap, this.revision);
+        writeRectanglesToFile(this.rootTreemap, this.revision);
     }
 
-    private void squarifiedToLT(List<Entity> entityList, Rectangle rectangle) {
+    private Treemap squarifiedToLT(String treemapId, List<Entity> entityList, Rectangle rectangle) {
 
-        // Sort elements
+        // Filter elements
         entityList.removeIf(entity -> entity.getWeight(0) == 0.0);
+        // Sort elements
         entityList.sort(Comparator.comparing(o -> ((Entity) o).getWeight(0)).reversed());
         normalize(entityList, rectangle.width * rectangle.height);
 
+        // Make a copy of the entities we are adding
+        List<Entity> entityListCopy = new ArrayList<>();
+        for (Entity entity : entityList) {
+            entityListCopy.add(entity);
+        }
+
+        // Initialize treemap
+        Treemap treemap = new Treemap(treemapId, root.getChildren(), rectangle);
         Block outsideBlock = new Block();
-        this.treemap.origin = outsideBlock;
+        treemap.origin = outsideBlock;
 
         List<Entity> currentRow = new ArrayList<>();
 
@@ -119,6 +126,20 @@ public class TreemapManager {
                 currentRow.clear();
             }
         }
+
+        // Compute rectangles
+        treemap.computeTreemap(this.revision);
+
+        // Make recursive calls
+        for (Entity entity : entityListCopy) {
+            if (entity.getChildren().size() > 0 && entity.getWeight(0) > 0.0) {
+                Rectangle allowedArea = treemap.findBlock(treemap.origin, entity.getId()).rectangle.copy();
+                // Treemap newTreemap = new Treemap(entity.getId(), entity.getChildren(), allowedArea);
+                Treemap newTreemap = squarifiedToLT(entity.getId(), entity.getChildren(), allowedArea);
+                treemap.addTreemap(newTreemap);
+            }
+        }
+        return treemap;
     }
 
     // Test if adding a new entity to row improves ratios (get closer to 1)
@@ -174,12 +195,14 @@ public class TreemapManager {
         List<String> lines = new ArrayList<>();
         addLine(lines, treemap.origin);
 
+
         lines.sort(String.CASE_INSENSITIVE_ORDER);
 //        for (String line : lines) {
 //            System.out.println(line);
 //        }
 
         Path file = Paths.get(String.format("%s/t%d.rect", Main.outputDir, revision));
+
         try {
             Files.write(file, lines, Charset.forName("UTF-8"));
         } catch (IOException e) {

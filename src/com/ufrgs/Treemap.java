@@ -5,17 +5,20 @@ import java.util.List;
 
 public class Treemap {
 
+    String id;
     Block origin;
     List<Treemap> treemapList;
     Rectangle baseRectangle;
     private List<Entity> entityList;
 
-    public Treemap(List<Entity> entityList, Rectangle rectangle) {
+    public Treemap(String id, List<Entity> entityList, Rectangle rectangle) {
+        this.id = id;
         this.baseRectangle = rectangle;
         this.entityList = new ArrayList<>();
         for (Entity entity : entityList) {
             this.entityList.add(entity);
         }
+        this.treemapList = new ArrayList<>();
     }
 
     public void computeTreemap(int revision) {
@@ -199,6 +202,38 @@ public class Treemap {
             }
         }
         return bestCandidate;
+    }
+
+    public void addTreemap(Treemap newTreemap) {
+        this.treemapList.add(newTreemap);
+    }
+
+    public Block findBlock(Block block, String itemId) {
+
+        if (block.id != null && block.id.equals(itemId)) {
+            return block;
+        } else {
+            Block found = null;
+            if (block.central != null) {
+                Block temp = findBlock(block.central, itemId);
+                if (temp != null) {
+                    found = temp;
+                }
+            }
+            if (block.right != null) {
+                Block temp = findBlock(block.right, itemId);
+                if (temp != null) {
+                    found = temp;
+                }
+            }
+            if (block.bottom != null) {
+                Block temp = findBlock(block.bottom, itemId);
+                if (temp != null) {
+                    found = temp;
+                }
+            }
+            return found;
+        }
     }
 }
 
