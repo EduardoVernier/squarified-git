@@ -22,7 +22,10 @@ public class TreemapManager {
 
 
     TreemapManager(Entity root, Rectangle baseRectangle) {
+        // Clean/create output directories
         Arrays.stream(new File(Main.outputDir).listFiles()).forEach(File::delete);
+        new File(Main.outputDir).mkdirs(); // In case path doesn't exist
+
 
         this.root = root;
         this.baseRectangle = baseRectangle;
@@ -46,7 +49,7 @@ public class TreemapManager {
         revision++;
 
         // Rearrange cell with new weights
-//        this.treemap.origin.baseRectangle = this.baseRectangle.copy();
+        // this.rootTreemap.origin.rectangle = this.baseRectangle.copy();
         this.rootTreemap.computeTreemap(this.revision);
 
         writeRectanglesToFile(this.rootTreemap, this.revision);
@@ -67,17 +70,17 @@ public class TreemapManager {
         }
 
         // Initialize treemap
-        Treemap treemap = new Treemap(treemapId, root.getChildren(), rectangle);
+        Treemap treemap = new Treemap(treemapId, entityList, rectangle.copy());
         Block outsideBlock = new Block();
         treemap.origin = outsideBlock;
 
         List<Entity> currentRow = new ArrayList<>();
 
-        while (!entityList.isEmpty()) {
+        while (true) {
 
             boolean verticalCut = rectangle.width >= rectangle.height;
 
-            if (improvesRatio(currentRow, getNormalizedWeight(entityList.get(0)), rectangle.getShortEdge())) {
+            if (!entityList.isEmpty() && improvesRatio(currentRow, getNormalizedWeight(entityList.get(0)), rectangle.getShortEdge())) {
                 currentRow.add(entityList.get(0));
                 entityList.remove(0);
 
@@ -124,6 +127,10 @@ public class TreemapManager {
                     outsideBlock = newOutside;
                 }
                 currentRow.clear();
+            }
+
+            if(entityList.isEmpty() && currentRow.isEmpty()) {
+                break;
             }
         }
 
@@ -191,10 +198,16 @@ public class TreemapManager {
 
     private void writeRectanglesToFile(Treemap treemap, int revision) {
 
-        new File(Main.outputDir).mkdirs(); // In case path doesn't exist
         List<String> lines = new ArrayList<>();
-        addLine(lines, treemap.origin);
-
+        Stack stack = new Stack<Treemap>();
+        stack.push(treemap);
+        while (!stack.empty()) {
+            Treemap tm = (Treemap) stack.pop();
+            addLine(lines, tm.origin);
+            for (Treemap childTreemap : tm.treemapList) {
+                stack.push(childTreemap);
+            }
+        }
 
         lines.sort(String.CASE_INSENSITIVE_ORDER);
 //        for (String line : lines) {
