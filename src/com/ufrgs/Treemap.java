@@ -1,5 +1,7 @@
 package com.ufrgs;
 
+import sun.reflect.generics.tree.Tree;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +37,12 @@ public class Treemap {
                 this.origin.rectangle = baseRectangle.copy();
                 computeCoordinates(this.origin, revision);
             }
+        }
+
+        // Trigger treemap computation for children treemaps
+        for (Treemap tremap : treemapList) {
+            tremap.baseRectangle = this.findBlock(this.origin, tremap.id).rectangle.copy();
+            tremap.computeTreemap(revision);
         }
     }
 
