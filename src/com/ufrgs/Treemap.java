@@ -15,7 +15,7 @@ public class Treemap {
 
     public Treemap(String id, List<Entity> entityList, Rectangle rectangle) {
         this.id = id;
-        this.baseRectangle = rectangle;
+        this.baseRectangle = rectangle.copy();
         this.entityList = new ArrayList<>();
         for (Entity entity : entityList) {
             this.entityList.add(entity);
@@ -24,25 +24,38 @@ public class Treemap {
     }
 
     public void computeTreemap(int revision) {
-        this.origin.rectangle = baseRectangle.copy();
-        computeCoordinates(this.origin, revision);
+
+        if (this.origin != null) {
+            this.origin.rectangle = baseRectangle.copy();
+            computeCoordinates(this.origin, revision);
+        }
 
         for (Entity entity : entityList) {
             // Find out which entities must be added
             if (entity.getAdditionRevision() == revision && revision != 0 ) {
                 // Add them, recomputing treemap after each insertion
-                addItem(entity);
+                if (findBlock(this.origin, entity.getId()) == null) {
+                    addItem(entity);
+                }
 
                 // Trigger children treemap computation (reset origin coords)
                 this.origin.rectangle = baseRectangle.copy();
                 computeCoordinates(this.origin, revision);
+
+                // Make recursive calls to create treemaps
+                if (entity.getChildren().size() > 0) {
+                    Rectangle allowedArea = this.findBlock(this.origin, entity.getId()).rectangle.copy();
+                    Treemap newTreemap = new Treemap(entity.getId(), entity.getChildren(), allowedArea);
+                    this.addTreemap(newTreemap);
+                    newTreemap.computeTreemap(revision);
+                }
             }
         }
 
         // Trigger treemap computation for children treemaps
-        for (Treemap tremap : treemapList) {
-            tremap.baseRectangle = this.findBlock(this.origin, tremap.id).rectangle.copy();
-            tremap.computeTreemap(revision);
+        for (Treemap treemap : treemapList) {
+            treemap.baseRectangle = this.findBlock(this.origin, treemap.id).rectangle.copy();
+            treemap.computeTreemap(revision);
         }
     }
 
@@ -128,7 +141,7 @@ public class Treemap {
 
     public void addItem(Entity entity) {
         if (origin == null) {
-//            origin = new Block(id, value, kind);
+            origin = new Block(entity);
         } else {
             Block receiver = findWorstAspectRatioBlock(origin);
 
@@ -217,6 +230,10 @@ public class Treemap {
     }
 
     public Block findBlock(Block block, String itemId) {
+
+        if (block == null) {
+            return null;
+        }
 
         if (block.id != null && block.id.equals(itemId)) {
             return block;

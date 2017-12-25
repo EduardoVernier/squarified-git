@@ -61,7 +61,11 @@ public class Block {
 
     public double getCentralWeight(int revision) {
         if (this.central == null) {
-            return this.weightList.get(revision);
+            if (weightList.isEmpty()) {
+                return 0;
+            } else {
+                return this.weightList.get(revision);
+            }
         } else {
             return this.central.getFullWeight(revision);
         }

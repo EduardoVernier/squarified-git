@@ -55,7 +55,12 @@ public class TreemapManager {
         writeRectanglesToFile(this.rootTreemap, this.revision);
     }
 
-    private Treemap squarifiedToLT(String treemapId, List<Entity> entityList, Rectangle rectangle) {
+    private Treemap squarifiedToLT(String treemapId, List<Entity> originalEntityList, Rectangle rectangle) {
+
+        List<Entity> entityList = new ArrayList<>(); // First copy
+        for (Entity entity : originalEntityList) {
+            entityList.add(entity);
+        }
 
         // Filter elements
         entityList.removeIf(entity -> entity.getWeight(0) == 0.0);
@@ -70,7 +75,7 @@ public class TreemapManager {
         }
 
         // Initialize treemap
-        Treemap treemap = new Treemap(treemapId, entityList, rectangle.copy());
+        Treemap treemap = new Treemap(treemapId, originalEntityList, rectangle.copy());
         Block outsideBlock = new Block();
         treemap.origin = outsideBlock;
 
