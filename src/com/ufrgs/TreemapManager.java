@@ -208,7 +208,14 @@ public class TreemapManager {
         stack.push(treemap);
         while (!stack.empty()) {
             Treemap tm = (Treemap) stack.pop();
-            addLine(lines, tm.origin);
+
+            // Get parent ids
+            List<String> parentIds = new ArrayList<>();
+            for (Treemap childTreemap : tm.treemapList) {
+                parentIds.add(childTreemap.id);
+            }
+
+            addLine(lines, tm.origin, parentIds);
             for (Treemap childTreemap : tm.treemapList) {
                 stack.push(childTreemap);
             }
@@ -228,21 +235,24 @@ public class TreemapManager {
         }
     }
 
-    private void addLine(List<String> lines, Block block) {
+    private void addLine(List<String> lines, Block block, List<String> parentIds) {
 
-        if (block.id != null) {
+        if (block.id != null &&
+                !parentIds.contains(block.id) &&
+                block.weightList.get(this.revision) > 0.0) {
+
             lines.add(String.format(Locale.ROOT, "%s,%.10f,%.10f,%.10f,%.10f",
                       block.id, block.rectangle.x, block.rectangle.y, block.rectangle.width, block.rectangle.height));
         }
 
         if(block.central != null) {
-            addLine(lines, block.central);
+            addLine(lines, block.central, parentIds);
         }
         if(block.right != null) {
-            addLine(lines, block.right);
+            addLine(lines, block.right, parentIds);
         }
         if(block.bottom != null) {
-            addLine(lines, block.bottom);
+            addLine(lines, block.bottom, parentIds);
         }
     }
 
