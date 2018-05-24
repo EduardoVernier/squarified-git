@@ -143,7 +143,7 @@ public class Treemap {
         } else {
             Block receiver = findWorstAspectRatioBlock(origin);
 
-            if (receiver.rectangle.width >= receiver.rectangle.height) {
+            if (receiver.rectangle.width > receiver.rectangle.height + 0.0001) {
                 if (receiver.right == null) {
                     receiver.right = new Block(entity);
                     // System.out.println("Right insert " + receiver.right.id + " into " + receiver.id);

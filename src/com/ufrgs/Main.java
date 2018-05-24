@@ -4,17 +4,30 @@ import java.util.List;
 
 public class Main {
 
-//    static String inputDir = "/home/eduardo/PycharmProjects/dynamic-treemap-resources/dataset/exo";
-    static String inputDir = "./dataset/test";
-
-    static String outputDir = "./output/test";
+    static String inputDir;
+    static String outputDir;
 
     public static void main(String[] args) {
 
+        if (args.length == 4) { // As specified by Max
 
-        Entity root = Parser.buildHierarchy(inputDir);
+            // Generate file with rectangles
+            inputDir = args[0];
+            int width = Integer.valueOf(args[1]);
+            int height = Integer.valueOf(args[2]);
+            outputDir = args[3];
 
-        Rectangle baseRectangle = new Rectangle(1000, 1000);
-        new TreemapManager(root, baseRectangle);
+            Entity root = Parser.buildHierarchy(inputDir);
+            Rectangle baseRectangle = new Rectangle(width, height);
+            new TreemapManager(root, baseRectangle);
+
+        } else {
+            argsError();
+        }
+    }
+
+    private static void argsError() {
+        System.out.println("Usage: \njava -cp ./bin com.ufrgs.Main input_dir width height output_dir");
+        System.out.println("Width and Height are given in pixels (integers).");
     }
 }

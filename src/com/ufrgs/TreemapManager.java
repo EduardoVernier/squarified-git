@@ -23,7 +23,10 @@ public class TreemapManager {
 
     TreemapManager(Entity root, Rectangle baseRectangle) {
         // Clean/create output directories
-        Arrays.stream(new File(Main.outputDir).listFiles()).forEach(File::delete);
+        File[] files = new File(Main.outputDir).listFiles();
+        if (files != null && files.length > 0) {
+            Arrays.stream(files).forEach(File::delete);
+        }
         new File(Main.outputDir).mkdirs(); // In case path doesn't exist
 
 
@@ -83,7 +86,7 @@ public class TreemapManager {
 
         while (true) {
 
-            boolean verticalCut = rectangle.width >= rectangle.height;
+            boolean verticalCut = rectangle.width > rectangle.height;
 
             if (!entityList.isEmpty() && improvesRatio(currentRow, getNormalizedWeight(entityList.get(0)), rectangle.getShortEdge())) {
                 currentRow.add(entityList.get(0));
