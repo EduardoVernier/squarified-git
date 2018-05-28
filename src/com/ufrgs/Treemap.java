@@ -42,6 +42,16 @@ public class Treemap {
 
                 // Make recursive calls to create treemaps
                 if (entity.getChildren().size() > 0) {
+                    boolean exists = false;
+                    for (Treemap tm : this.treemapList) {
+                        if (tm.id.equals(entity.getId())) {
+                            exists = true;
+                        }
+                    }
+                    if (exists) {
+                        break;
+                    }
+
                     Rectangle allowedArea = this.findBlock(this.origin, entity.getId()).rectangle.copy();
                     Treemap newTreemap = new Treemap(entity.getId(), entity.getChildren(), allowedArea);
                     this.addTreemap(newTreemap);
