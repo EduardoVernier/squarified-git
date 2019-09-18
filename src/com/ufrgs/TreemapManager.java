@@ -29,10 +29,14 @@ public class TreemapManager {
         }
         new File(Main.outputDir).mkdirs(); // In case path doesn't exist
 
-
         this.root = root;
         this.baseRectangle = baseRectangle;
         this.nRevisions = root.getNumberOfRevisions();
+
+        while(root.getWeight(this.revision) == 0.0) {
+            writeRectanglesToFile(this.rootTreemap, this.revision);
+            this.revision += 1;
+        }
 
         // = new Treemap(root.getChildren(), this.baseRectangle.copy());
         Rectangle rectangle = this.baseRectangle.copy();
@@ -43,7 +47,7 @@ public class TreemapManager {
 
         writeRectanglesToFile(this.rootTreemap, this.revision);
 
-        for (int i = 1; i < this.nRevisions; ++i) {
+        while (this.revision < this.nRevisions - 1) {
             nextRevision();
         }
     }
@@ -66,9 +70,9 @@ public class TreemapManager {
         }
 
         // Filter elements
-        entityList.removeIf(entity -> entity.getWeight(0) == 0.0);
+        entityList.removeIf(entity -> entity.getWeight(this.revision) == 0.0);
         // Sort elements
-        entityList.sort(Comparator.comparing(o -> ((Entity) o).getWeight(0)).reversed());
+        entityList.sort(Comparator.comparing(o -> ((Entity) o).getWeight(this.revision)).reversed());
         normalize(entityList, rectangle.width * rectangle.height);
 
         // Make a copy of the entities we are adding
@@ -207,20 +211,23 @@ public class TreemapManager {
     private void writeRectanglesToFile(Treemap treemap, int revision) {
 
         List<String> lines = new ArrayList<>();
-        Stack stack = new Stack<Treemap>();
-        stack.push(treemap);
-        while (!stack.empty()) {
-            Treemap tm = (Treemap) stack.pop();
 
-            // Get parent ids
-            List<String> parentIds = new ArrayList<>();
-            for (Treemap childTreemap : tm.treemapList) {
-                parentIds.add(childTreemap.id);
-            }
+        if (treemap != null) {
+            Stack stack = new Stack<Treemap>();
+            stack.push(treemap);
+            while (!stack.empty()) {
+                Treemap tm = (Treemap) stack.pop();
 
-            addLine(lines, tm.origin, parentIds);
-            for (Treemap childTreemap : tm.treemapList) {
-                stack.push(childTreemap);
+                // Get parent ids
+                List<String> parentIds = new ArrayList<>();
+                for (Treemap childTreemap : tm.treemapList) {
+                    parentIds.add(childTreemap.id);
+                }
+
+                addLine(lines, tm.origin, parentIds);
+                for (Treemap childTreemap : tm.treemapList) {
+                    stack.push(childTreemap);
+                }
             }
         }
 
